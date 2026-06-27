@@ -40,17 +40,34 @@ export default function Home() {
   const [gallery, setGallery] = useState<string[] | null>(null);
   const [galleryIdx, setGalleryIdx] = useState(0);
 
-  // Gallery keyboard navigation
+  // Gallery keyboard navigation + touch swipe
   useEffect(() => {
     if (!gallery) return;
     const g = gallery;
+    let touchStartX = 0;
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") setGallery(null);
       if (e.key === "ArrowLeft") setGalleryIdx(i => (i - 1 + g.length) % g.length);
       if (e.key === "ArrowRight") setGalleryIdx(i => (i + 1) % g.length);
     }
+    function handleTouchStart(e: TouchEvent) {
+      touchStartX = e.touches[0].clientX;
+    }
+    function handleTouchEnd(e: TouchEvent) {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) setGalleryIdx(i => (i + 1) % g.length);
+        else setGalleryIdx(i => (i - 1 + g.length) % g.length);
+      }
+    }
     window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [gallery]);
   const [petals, setPetals] = useState<{ id: number; x: number; d: number; s: number; r: number }[]>([]);
   const [embers, setEmbers] = useState<{ id: number; x: number; d: number; s: number }[]>([]);
