@@ -5,10 +5,7 @@ import path from "path";
 const SESSION_COOKIE = "phoenix_session";
 const SESSION_VALUE = "authenticated";
 
-const passwordFile = path.join(
-  process.env.NODE_ENV === "development" ? process.cwd() : "/tmp/data",
-  "password.txt"
-);
+const passwordFile = path.join(process.cwd(), "data", "password.txt");
 
 function getStoredPassword(): string {
   try {

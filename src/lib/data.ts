@@ -48,10 +48,7 @@ export type SiteContent = {
   cards: Card[];
 };
 
-const isDev = process.env.NODE_ENV === "development";
-const dataDir = isDev
-  ? path.join(process.cwd(), "data")
-  : "/tmp/data";
+const dataDir = path.join(process.cwd(), "data");
 
 const dataFile = path.join(dataDir, "content.json");
 
