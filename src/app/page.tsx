@@ -40,36 +40,20 @@ export default function Home() {
   const [gallery, setGallery] = useState<string[] | null>(null);
   const [galleryIdx, setGalleryIdx] = useState(0);
 
-  // Gallery keyboard navigation + touch swipe
+  // Gallery keyboard navigation
   useEffect(() => {
     if (!gallery) return;
     const g = gallery;
-    let touchStartX = 0;
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") setGallery(null);
       if (e.key === "ArrowLeft") setGalleryIdx(i => (i - 1 + g.length) % g.length);
       if (e.key === "ArrowRight") setGalleryIdx(i => (i + 1) % g.length);
     }
-    function handleTouchStart(e: TouchEvent) {
-      touchStartX = e.touches[0].clientX;
-    }
-    function handleTouchEnd(e: TouchEvent) {
-      const diff = touchStartX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 50) {
-        e.preventDefault();
-        if (diff > 0) setGalleryIdx(i => (i + 1) % g.length);
-        else setGalleryIdx(i => (i - 1 + g.length) % g.length);
-      }
-    }
     window.addEventListener("keydown", handleKey);
-    window.addEventListener("touchstart", handleTouchStart, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd, { passive: false });
-    return () => {
-      window.removeEventListener("keydown", handleKey);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
-    };
+    return () => window.removeEventListener("keydown", handleKey);
   }, [gallery]);
+
+  const [touchStartX, setTouchStartX] = useState(0);
   const [petals, setPetals] = useState<{ id: number; x: number; d: number; s: number; r: number }[]>([]);
   const [embers, setEmbers] = useState<{ id: number; x: number; d: number; s: number }[]>([]);
 
@@ -482,11 +466,19 @@ export default function Home() {
       {/* Gallery modal */}
       {gallery && (
         <div style={{ position: "fixed", inset: 0, zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)", touchAction: "none" }}
+          onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+          onTouchEnd={(e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+              e.preventDefault();
+              if (diff > 0) setGalleryIdx(i => (i + 1) % gallery.length);
+              else setGalleryIdx(i => (i - 1 + gallery.length) % gallery.length);
+            } else {
+              setGallery(null);
+            }
+          }}
           onClick={() => setGallery(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", touchAction: "none" }}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
             <img src={gallery[galleryIdx]} alt="" style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "1rem", objectFit: "contain" }} />
             {gallery.length > 1 && (
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
