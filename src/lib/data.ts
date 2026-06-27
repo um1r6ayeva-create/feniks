@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import { getData, setData } from "./db";
 
 export type SocialLink = {
   platform: string;
@@ -48,58 +47,125 @@ export type SiteContent = {
   cards: Card[];
 };
 
-const dataDir = path.join(process.cwd(), "data");
-
-const dataFile = path.join(dataDir, "content.json");
-
 function getDefaultContent(): SiteContent {
   return {
     profile: {
       name: "Феникс",
       avatar: "",
-      bio: "Добро пожаловать на мой сайт",
+      bio: "Будь как Феникс",
       email: "",
       phone: "",
       location: "",
     },
     site: {
       title: "Феникс",
-      description: "Мой личный сайт",
+      description: "Будь как Феникс",
       footer: "© 2026 Феникс",
     },
     theme: {
-      background: "#0a0a0a",
-      foreground: "#f5f5f5",
-      accent: "#d4a574",
-      accentLight: "#e8c4a0",
+      background: "#2a2522",
+      foreground: "#e8dfd4",
+      accent: "#e899a0",
+      accentLight: "#f4c8d6",
     },
     social: [
-      { platform: "Telegram", url: "", icon: "telegram" },
-      { platform: "GitHub", url: "", icon: "github" },
+      { platform: "Telegram", url: "https://t.me/ushd5", icon: "telegram" },
     ],
     sections: [
-      { id: "hero", title: "Феникс", content: "Добро пожаловать на мой сайт" },
-      { id: "about", title: "Обо мне", content: "Напишите здесь о себе..." },
+      {
+        id: "hero",
+        title: "Феникс",
+        content:
+          '"Когда весь твой мир превращается в прах, просто начни строить его заново"',
+        images: [],
+      },
     ],
-    cards: [],
+    cards: [
+      {
+        id: "like1",
+        title: "Шашлык, Жаренная рыба, Олот самса, Самса томчи (тандыр), Ташкентский плов, Куриный суп, Манты, Машаба, Тефтель, Голубцы, Чечевичный суп, Паста",
+        type: "like",
+        category: "Еда",
+        images: [
+          "/uploads/1782498141731.jpg",
+          "/uploads/1782498145791.jpg",
+          "/uploads/1782498153464.jpg",
+          "/uploads/1782498175134.jpg",
+          "/uploads/1782498212847.jpg",
+          "/uploads/1782498219885.jpg",
+          "/uploads/1782498224140.jpg",
+          "/uploads/1782498229787.jpg",
+          "/uploads/1782498246399.jpg",
+          "/uploads/1782498256530.jpg",
+          "/uploads/1782498267437.jpg",
+          "/uploads/1782498272454.jpg",
+        ],
+        reason: "Я предпочитаю жидкие блюда, они для меня более легкие и комфортные.",
+      },
+      {
+        id: "like2",
+        title: "Сакура",
+        type: "like",
+        category: "Цветы",
+        images: [],
+        reason: "Нежность и быстротечность — напоминание ценить каждый момент",
+      },
+      {
+        id: "like3",
+        title: "Багровый",
+        type: "like",
+        category: "Цвета",
+        images: [],
+        reason: "Цвет огня и возрождения, сила и страсть",
+      },
+      {
+        id: "dislike1",
+        title: "Жуери Гуртик, Гречка, Горох, Макароны, Лапша быстрого приготовления",
+        type: "dislike",
+        category: "Еда",
+        images: [
+          "/uploads/1782502611363.jpg",
+          "/uploads/1782502617959.jpg",
+          "/uploads/1782502622075.jpg",
+          "/uploads/1782502627358.jpg",
+          "/uploads/1782502630555.jpg",
+        ],
+        reason: "Блюди которые мне совсем не нравятся.",
+      },
+      {
+        id: "dislike2",
+        title: "Серый",
+        type: "dislike",
+        category: "Цвета",
+        images: [],
+        reason: "Цвет безэмоциональности и увядания",
+      },
+      {
+        id: "dislike3",
+        title: "Искусственные цветы",
+        type: "dislike",
+        category: "Цветы",
+        images: [],
+        reason: "Красота без жизни и аромата",
+      },
+    ],
   };
 }
 
-export function getContent(): SiteContent {
+export async function getContent(): Promise<SiteContent> {
   try {
-    if (!fs.existsSync(dataFile)) {
-      return getDefaultContent();
+    const raw = await getData("content");
+    if (!raw) {
+      const defaults = getDefaultContent();
+      await setData("content", JSON.stringify(defaults));
+      return defaults;
     }
-    const raw = fs.readFileSync(dataFile, "utf-8");
     return JSON.parse(raw);
   } catch {
     return getDefaultContent();
   }
 }
 
-export function saveContent(content: SiteContent): void {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  fs.writeFileSync(dataFile, JSON.stringify(content, null, 2), "utf-8");
+export async function saveContent(content: SiteContent): Promise<void> {
+  await setData("content", JSON.stringify(content));
 }

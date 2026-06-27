@@ -14,19 +14,19 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { site } = getContent();
+  const { site } = await getContent();
   return {
     title: site.title,
     description: site.description,
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { theme } = getContent();
+  const { theme } = await getContent();
 
   return (
     <html

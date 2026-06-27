@@ -3,7 +3,7 @@ import { getContent, saveContent } from "@/lib/data";
 import { isAuthenticated } from "@/lib/auth";
 
 export async function GET() {
-  return Response.json(getContent());
+  return Response.json(await getContent());
 }
 
 export async function PUT(request: NextRequest) {
@@ -11,6 +11,6 @@ export async function PUT(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await request.json();
-  saveContent(body);
+  await saveContent(body);
   return Response.json({ success: true });
 }

@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import fs from "fs";
-import path from "path";
 
 export async function POST(request: NextRequest) {
   if (!(await isAuthenticated())) {
@@ -16,15 +14,9 @@ export async function POST(request: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const ext = file.name.split(".").pop() || "png";
-  const fileName = `${Date.now()}.${ext}`;
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : ext === "gif" ? "image/gif" : "image/jpeg";
+  const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  fs.writeFileSync(path.join(uploadDir, fileName), buffer);
-
-  return Response.json({ url: `/uploads/${fileName}` });
+  return Response.json({ url: base64 });
 }

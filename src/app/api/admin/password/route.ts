@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
   const { oldPassword, newPassword } = await request.json();
 
-  if (!changePassword(oldPassword, newPassword)) {
+  if (!(await changePassword(oldPassword, newPassword))) {
     return Response.json({ error: "Неверный старый пароль" }, { status: 400 });
   }
 

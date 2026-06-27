@@ -1,36 +1,24 @@
 import { cookies } from "next/headers";
-import fs from "fs";
-import path from "path";
+import { getData, setData } from "./db";
 
 const SESSION_COOKIE = "phoenix_session";
 const SESSION_VALUE = "authenticated";
 
-const passwordFile = path.join(process.cwd(), "data", "password.txt");
-
-function getStoredPassword(): string {
+async function getStoredPassword(): Promise<string> {
   try {
-    if (fs.existsSync(passwordFile)) {
-      return fs.readFileSync(passwordFile, "utf-8").trim();
-    }
+    const stored = await getData("password");
+    if (stored) return stored;
   } catch {}
   return process.env.ADMIN_PASSWORD || "admin123";
 }
 
-function storePassword(password: string): void {
-  const dir = path.dirname(passwordFile);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(passwordFile, password, "utf-8");
+export async function verifyPassword(password: string): Promise<boolean> {
+  return password === (await getStoredPassword());
 }
 
-export function verifyPassword(password: string): boolean {
-  return password === getStoredPassword();
-}
-
-export function changePassword(oldPassword: string, newPassword: string): boolean {
-  if (!verifyPassword(oldPassword)) return false;
-  storePassword(newPassword);
+export async function changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
+  if (!(await verifyPassword(oldPassword))) return false;
+  await setData("password", newPassword);
   return true;
 }
 
@@ -40,7 +28,7 @@ export async function setSession(): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/",
+    path: "",
     maxAge: 60 * 60 * 24 * 30,
   });
 }
