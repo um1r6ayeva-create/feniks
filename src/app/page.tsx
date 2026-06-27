@@ -56,13 +56,14 @@ export default function Home() {
     function handleTouchEnd(e: TouchEvent) {
       const diff = touchStartX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 50) {
+        e.preventDefault();
         if (diff > 0) setGalleryIdx(i => (i + 1) % g.length);
         else setGalleryIdx(i => (i - 1 + g.length) % g.length);
       }
     }
     window.addEventListener("keydown", handleKey);
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd, { passive: false });
     return () => {
       window.removeEventListener("keydown", handleKey);
       window.removeEventListener("touchstart", handleTouchStart);
@@ -480,9 +481,12 @@ export default function Home() {
 
       {/* Gallery modal */}
       {gallery && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)" }}
+        <div style={{ position: "fixed", inset: 0, zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)", touchAction: "none" }}
           onClick={() => setGallery(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", touchAction: "none" }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}>
             <img src={gallery[galleryIdx]} alt="" style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "1rem", objectFit: "contain" }} />
             {gallery.length > 1 && (
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
