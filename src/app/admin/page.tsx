@@ -439,8 +439,18 @@ export default function AdminPage() {
                           });
                         }
                         if (url) {
-                          updateData(["cards", String(idx), "images"], [...(card.images || []), url]);
-                          setTimeout(() => handleSave(), 300);
+                          const newImages = [...(card.images || []), url];
+                          const newData = JSON.parse(JSON.stringify(dataRef.current));
+                          newData.cards[idx].images = newImages;
+                          setData(newData);
+                          dataRef.current = newData;
+                          try {
+                            await fetch("/api/content", {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(newData),
+                            });
+                          } catch {}
                         }
                       }} />
                     </label>
