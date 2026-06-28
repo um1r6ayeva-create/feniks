@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const ALL_PAIRS = [
   { emoji: "🌸", label: "Сакура" },
@@ -49,16 +49,16 @@ export default function MemoryGame({ onClose }: { onClose: () => void }) {
   const [flipped, setFlipped] = useState<number[]>([]);
   const [locked, setLocked] = useState(false);
   const [moves, setMoves] = useState(0);
-  const [won, setWon] = useState(false);
   const [msg, setMsg] = useState("");
+  const transitioning = useRef(false);
 
   const cols = LEVELS[level].cols;
   const allMatched = cards.every(c => c.matched);
   const isMaxLevel = level === LEVELS.length - 1;
 
   useEffect(() => {
-    if (allMatched && !won) {
-      setWon(true);
+    if (allMatched && !transitioning.current) {
+      transitioning.current = true;
       setMsg(isMaxLevel ? "Максимум! 🎉" : "Отлично! Следующий уровень...");
       const t = setTimeout(() => {
         if (isMaxLevel) {
@@ -72,15 +72,15 @@ export default function MemoryGame({ onClose }: { onClose: () => void }) {
         setFlipped([]);
         setLocked(false);
         setMoves(0);
-        setWon(false);
         setMsg("");
+        transitioning.current = false;
       }, 1800);
       return () => clearTimeout(t);
     }
-  }, [allMatched, won, isMaxLevel, level]);
+  }, [allMatched, isMaxLevel, level]);
 
   const handleClick = useCallback((id: number) => {
-    if (locked || won) return;
+    if (locked || transitioning.current) return;
     const card = cards.find(c => c.id === id);
     if (!card || card.flipped || card.matched) return;
 
@@ -107,7 +107,7 @@ export default function MemoryGame({ onClose }: { onClose: () => void }) {
         }, 800);
       }
     }
-  }, [cards, flipped, locked, won]);
+  }, [cards, flipped, locked]);
 
   const accent = "#d4818a";
 
