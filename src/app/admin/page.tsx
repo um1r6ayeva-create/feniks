@@ -403,31 +403,38 @@ export default function AdminPage() {
                       + Фото
                       <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                         const file = e.target.files?.[0]; if (!file) return;
+                        let url: string | null = null;
                         try {
                           const form = new FormData(); form.append("file", file);
                           const res = await fetch("/api/upload", { method: "POST", body: form });
                           const json = await res.json();
                           if (json.url) {
-                            updateData(["cards", String(idx), "images"], [...(card.images || []), json.url]);
+                            url = json.url;
                           } else {
                             throw new Error(json.error || "Upload failed");
                           }
                         } catch {
                           const reader = new FileReader();
-                          reader.onload = () => {
-                            const img = new Image();
-                            img.onload = () => {
-                              const canvas = document.createElement("canvas");
-                              const max = 800;
-                              let w = img.width, h = img.height;
-                              if (w > max || h > max) { if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
-                              canvas.width = w; canvas.height = h;
-                              canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-                              updateData(["cards", String(idx), "images"], [...(card.images || []), canvas.toDataURL("image/jpeg", 0.8)]);
+                          url = await new Promise<string>((resolve) => {
+                            reader.onload = () => {
+                              const img = new Image();
+                              img.onload = () => {
+                                const canvas = document.createElement("canvas");
+                                const max = 800;
+                                let w = img.width, h = img.height;
+                                if (w > max || h > max) { if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+                                canvas.width = w; canvas.height = h;
+                                canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+                                resolve(canvas.toDataURL("image/jpeg", 0.8));
+                              };
+                              img.src = reader.result as string;
                             };
-                            img.src = reader.result as string;
-                          };
-                          reader.readAsDataURL(file);
+                            reader.readAsDataURL(file);
+                          });
+                        }
+                        if (url) {
+                          updateData(["cards", String(idx), "images"], [...(card.images || []), url]);
+                          setTimeout(() => handleSave(), 300);
                         }
                       }} />
                     </label>

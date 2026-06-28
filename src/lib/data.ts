@@ -156,9 +156,7 @@ export async function getContent(): Promise<SiteContent> {
   try {
     const raw = await getData("content");
     if (!raw) {
-      const defaults = getDefaultContent();
-      await setData("content", JSON.stringify(defaults));
-      return defaults;
+      return getDefaultContent();
     }
     return JSON.parse(raw);
   } catch {
