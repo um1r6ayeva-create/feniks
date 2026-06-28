@@ -553,7 +553,7 @@ export default function Home() {
           onClick={() => setShowReviews(false)}>
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: "white", borderRadius: "1.25rem", width: "100%", maxWidth: "26rem", maxHeight: "85vh", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
-            <ReviewsChat onClose={() => setShowReviews(false)} />
+            <ReviewsChat onClose={() => setShowReviews(false)} isAdmin={isAdmin} />
           </div>
         </div>
       )}
