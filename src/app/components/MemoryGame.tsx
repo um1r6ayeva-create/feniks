@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const ALL_PAIRS = [
   { emoji: "🌸", label: "Сакура" },
@@ -14,13 +14,12 @@ const ALL_PAIRS = [
   { emoji: "🪷", label: "Лотос" },
 ];
 
-type Difficulty = "easy" | "medium" | "hard";
-
-const LEVELS: Record<Difficulty, { pairs: number; cols: number; label: string; desc: string }> = {
-  easy:   { pairs: 6,  cols: 4, label: "Легко",   desc: "4×3 · 6 пар" },
-  medium: { pairs: 8,  cols: 4, label: "Средне",  desc: "4×4 · 8 пар" },
-  hard:   { pairs: 10, cols: 5, label: "Сложно",  desc: "5×4 · 10 пар" },
-};
+const LEVELS = [
+  { pairs: 4,  cols: 4 },
+  { pairs: 6,  cols: 4 },
+  { pairs: 8,  cols: 4 },
+  { pairs: 10, cols: 5 },
+];
 
 type Card = { id: number; pairId: number; emoji: string; label: string; flipped: boolean; matched: boolean };
 
@@ -33,7 +32,7 @@ function shuffle<T>(a: T[]): T[] {
   return arr;
 }
 
-function initCards(level: Difficulty): Card[] {
+function initCards(level: number): Card[] {
   const { pairs } = LEVELS[level];
   const selected = shuffle(ALL_PAIRS).slice(0, pairs);
   const cards: Card[] = [];
@@ -45,23 +44,42 @@ function initCards(level: Difficulty): Card[] {
 }
 
 export default function MemoryGame({ onClose }: { onClose: () => void }) {
-  const [level, setLevel] = useState<Difficulty | null>(null);
-  const [cards, setCards] = useState<Card[]>([]);
+  const [level, setLevel] = useState(0);
+  const [cards, setCards] = useState<Card[]>(() => initCards(0));
   const [flipped, setFlipped] = useState<number[]>([]);
   const [locked, setLocked] = useState(false);
   const [moves, setMoves] = useState(0);
   const [won, setWon] = useState(false);
+  const [msg, setMsg] = useState("");
 
-  function startGame(lvl: Difficulty) {
-    setLevel(lvl);
-    setCards(initCards(lvl));
-    setFlipped([]);
-    setLocked(false);
-    setMoves(0);
-    setWon(false);
-  }
+  const cols = LEVELS[level].cols;
+  const allMatched = cards.every(c => c.matched);
+  const isMaxLevel = level === LEVELS.length - 1;
 
-  function handleClick(id: number) {
+  useEffect(() => {
+    if (allMatched && !won) {
+      setWon(true);
+      setMsg(isMaxLevel ? "Максимум! 🎉" : "Отлично! Следующий уровень...");
+      const t = setTimeout(() => {
+        if (isMaxLevel) {
+          setLevel(0);
+          setCards(initCards(0));
+        } else {
+          const next = level + 1;
+          setLevel(next);
+          setCards(initCards(next));
+        }
+        setFlipped([]);
+        setLocked(false);
+        setMoves(0);
+        setWon(false);
+        setMsg("");
+      }, 1800);
+      return () => clearTimeout(t);
+    }
+  }, [allMatched, won, isMaxLevel, level]);
+
+  const handleClick = useCallback((id: number) => {
     if (locked || won) return;
     const card = cards.find(c => c.id === id);
     if (!card || card.flipped || card.matched) return;
@@ -89,50 +107,18 @@ export default function MemoryGame({ onClose }: { onClose: () => void }) {
         }, 800);
       }
     }
-  }
-
-  function restart() {
-    if (level) {
-      setCards(initCards(level));
-      setFlipped([]);
-      setLocked(false);
-      setMoves(0);
-      setWon(false);
-    }
-  }
+  }, [cards, flipped, locked, won]);
 
   const accent = "#d4818a";
-  const cols = level ? LEVELS[level].cols : 4;
-
-  if (!level) {
-    return (
-      <div style={{ padding: "1.5rem", textAlign: "center" }}>
-        <p style={{ fontSize: "0.9rem", color: "#333", marginBottom: "1rem", fontWeight: 500 }}>Выберите сложность</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxWidth: "18rem", margin: "0 auto" }}>
-          {(["easy", "medium", "hard"] as Difficulty[]).map((lvl) => (
-            <button key={lvl} onClick={() => startGame(lvl)}
-              style={{
-                padding: "1rem", borderRadius: "0.75rem", border: `1px solid ${accent}30`,
-                background: `linear-gradient(135deg, ${accent}10, ${accent}05)`,
-                cursor: "pointer", textAlign: "left", transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent; e.currentTarget.style.boxShadow = `0 4px 16px ${accent}15`; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${accent}30`; e.currentTarget.style.boxShadow = "none"; }}>
-              <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#333" }}>{LEVELS[lvl].label}</div>
-              <div style={{ fontSize: "0.7rem", color: "#999", marginTop: "0.2rem" }}>{LEVELS[lvl].desc}</div>
-            </button>
-          ))}
-        </div>
-        <button onClick={onClose} style={{ marginTop: "1rem", background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: "0.8rem" }}>Закрыть</button>
-      </div>
-    );
-  }
 
   return (
     <div style={{ padding: "1.5rem", textAlign: "center" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-        <button onClick={() => setLevel(null)} style={{ background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: "0.75rem" }}>← Назад</button>
-        <span style={{ fontSize: "0.8rem", color: "#aaa" }}>Ходы: {moves}</span>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: "#999", cursor: "pointer", fontSize: "0.75rem" }}>✕ Закрыть</button>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <span style={{ fontSize: "0.75rem", color: accent, fontWeight: 600 }}>Уровень {level + 1}</span>
+          <span style={{ fontSize: "0.7rem", color: "#aaa" }}>Ходы: {moves}</span>
+        </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: "0.5rem", maxWidth: "22rem", margin: "0 auto" }}>
         {cards.map((card) => (
@@ -152,22 +138,9 @@ export default function MemoryGame({ onClose }: { onClose: () => void }) {
           </button>
         ))}
       </div>
-      {won && (
-        <div style={{ marginTop: "1.25rem" }}>
-          <p style={{ color: accent, fontSize: "1rem", margin: "0 0 0.75rem" }}>Победа! 🎉</p>
-          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-            <button onClick={restart} style={btnStyle(accent)}>Заново</button>
-            <button onClick={onClose} style={{ ...btnStyle(accent), background: "#f0ebe6", color: "#666" }}>Закрыть</button>
-          </div>
-        </div>
+      {msg && (
+        <p style={{ marginTop: "1rem", color: accent, fontSize: "1rem", fontWeight: 600 }}>{msg}</p>
       )}
     </div>
   );
 }
-
-const btnStyle = (accent: string): React.CSSProperties => ({
-  padding: "0.6rem 1.5rem", borderRadius: "0.75rem",
-  background: accent, color: "white", fontWeight: 500,
-  border: "none", cursor: "pointer", fontSize: "0.85rem",
-  letterSpacing: "0.05em",
-});
