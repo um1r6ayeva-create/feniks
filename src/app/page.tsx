@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AIQuiz from "./components/AIQuiz";
 import MemoryGame from "./components/MemoryGame";
+import ReviewsChat from "./components/ReviewsChat";
 
 type Theme = { background: string; foreground: string; accent: string; accentLight: string };
 type Section = { id: string; title: string; content: string; images: string[] };
@@ -37,6 +38,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [showGames, setShowGames] = useState(false);
   const [gamesTab, setGamesTab] = useState<"quiz" | "memory">("quiz");
+  const [showReviews, setShowReviews] = useState(false);
   const [gallery, setGallery] = useState<string[] | null>(null);
   const [galleryIdx, setGalleryIdx] = useState(0);
 
@@ -463,6 +465,24 @@ export default function Home() {
         🎮
       </button>
 
+      {/* Floating reviews button */}
+      <button onClick={() => setShowReviews(true)}
+        style={{ position: "fixed", bottom: "1.5rem", right: "5.5rem", zIndex: 40,
+          width: "3rem", height: "3rem", borderRadius: "50%",
+          background: `linear-gradient(135deg, ${c(t.accent, 0.2)}, ${c(t.accentLight, 0.15)})`,
+          border: `1px solid ${c(t.accent, 0.2)}`,
+          cursor: "pointer", fontSize: "1.2rem",
+          boxShadow: `0 4px 20px ${c(t.accent, 0.15)}`,
+          transition: "all 0.3s",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          backdropFilter: "blur(8px)",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = `0 6px 30px ${c(t.accent, 0.25)}`; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 4px 20px ${c(t.accent, 0.15)}`; }}
+        title="Пожелания и отзывы">
+        ✉
+      </button>
+
       {/* Gallery modal */}
       {gallery && (
         <div style={{ position: "fixed", inset: 0, zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(12px)", touchAction: "none" }}
@@ -523,6 +543,17 @@ export default function Home() {
             {/* Content */}
             {gamesTab === "quiz" && <AIQuiz sections={sections} profile={profile} onClose={() => setShowGames(false)} />}
             {gamesTab === "memory" && <MemoryGame onClose={() => setShowGames(false)} />}
+          </div>
+        </div>
+      )}
+
+      {/* Reviews modal */}
+      {showReviews && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}
+          onClick={() => setShowReviews(false)}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: "white", borderRadius: "1.25rem", width: "100%", maxWidth: "26rem", maxHeight: "85vh", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <ReviewsChat onClose={() => setShowReviews(false)} />
           </div>
         </div>
       )}
