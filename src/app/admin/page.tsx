@@ -439,18 +439,23 @@ export default function AdminPage() {
                           });
                         }
                         if (url) {
-                          const newImages = [...(card.images || []), url];
-                          const newData = JSON.parse(JSON.stringify(dataRef.current));
-                          newData.cards[idx].images = newImages;
-                          setData(newData);
-                          dataRef.current = newData;
                           try {
+                            const latest = await fetch("/api/content").then(r => r.json());
+                            const cardId = card.id;
+                            const target = latest.cards.find((c: any) => c.id === cardId);
+                            if (target) {
+                              target.images = [...(target.images || []), url];
+                            }
+                            setData(latest);
+                            dataRef.current = latest;
                             await fetch("/api/content", {
                               method: "PUT",
                               headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify(newData),
+                              body: JSON.stringify(latest),
                             });
-                          } catch {}
+                          } catch (err) {
+                            console.error("Auto-save failed:", err);
+                          }
                         }
                       }} />
                     </label>
