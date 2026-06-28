@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     });
 
     return Response.json({ url: blob.url });
-  } catch (err) {
-    console.error("Upload error:", err);
-    return Response.json({ error: "Ошибка загрузки" }, { status: 500 });
+  } catch (err: any) {
+    console.error("Upload error:", err?.message || err);
+    return Response.json({ error: err?.message || "Ошибка загрузки" }, { status: 500 });
   }
 }

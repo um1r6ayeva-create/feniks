@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [data, setData] = useState<SiteContent | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("profile");
   useEffect(() => {
     fetch("/api/admin/check")
@@ -52,14 +53,22 @@ export default function AdminPage() {
   async function handleSave() {
     if (!data) return;
     setSaving(true);
-    const res = await fetch("/api/content", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setSaveError(json.error || `Ошибка ${res.status}`);
+      }
+    } catch (e: any) {
+      setSaveError(e.message || "Ошибка сети");
     }
     setSaving(false);
   }
@@ -207,6 +216,9 @@ export default function AdminPage() {
               Выйти
             </button>
           </div>
+          {saveError && (
+            <p className="text-red-400 text-sm mt-1">{saveError}</p>
+          )}
         </div>
 
         <div className="flex gap-1 mb-6 flex-wrap">
