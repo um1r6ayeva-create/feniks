@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
+import { put } from "@vercel/blob";
 
 export const maxDuration = 30;
 
@@ -16,12 +17,14 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Файл не выбран" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : ext === "gif" ? "image/gif" : "image/jpeg";
-    const base64 = `data:${mime};base64,${buffer.toString("base64")}`;
+    const ext = file.name.split(".").pop() || "jpg";
+    const fileName = `feniks/${Date.now()}.${ext}`;
 
-    return Response.json({ url: base64 });
+    const blob = await put(fileName, file, {
+      access: "public",
+    });
+
+    return Response.json({ url: blob.url });
   } catch (err) {
     console.error("Upload error:", err);
     return Response.json({ error: "Ошибка загрузки" }, { status: 500 });

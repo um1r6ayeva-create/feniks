@@ -43,3 +43,5 @@ next-env.d.ts
 .vercel
 password.txt
 data/password.txt
+
+.env*
