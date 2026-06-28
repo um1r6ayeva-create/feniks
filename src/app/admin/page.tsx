@@ -55,16 +55,17 @@ export default function AdminPage() {
     setData(null);
   }
 
-  async function handleSave() {
-    const d = dataRef.current;
-    if (!d) return;
+  async function saveContent(d?: SiteContent) {
+    const toSave = d || dataRef.current;
+    if (!toSave) return;
     setSaving(true);
     setSaveError(null);
     try {
       const res = await fetch("/api/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(d),
+        body: JSON.stringify(toSave),
+        credentials: "include",
       });
       if (res.ok) {
         setSaved(true);
@@ -77,6 +78,10 @@ export default function AdminPage() {
       setSaveError(e.message || "Ошибка сети");
     }
     setSaving(false);
+  }
+
+  async function handleSave() {
+    await saveContent();
   }
 
   function updateData(path: string[], value: any) {
@@ -439,23 +444,12 @@ export default function AdminPage() {
                           });
                         }
                         if (url) {
-                          try {
-                            const latest = await fetch("/api/content").then(r => r.json());
-                            const cardId = card.id;
-                            const target = latest.cards.find((c: any) => c.id === cardId);
-                            if (target) {
-                              target.images = [...(target.images || []), url];
-                            }
-                            setData(latest);
-                            dataRef.current = latest;
-                            await fetch("/api/content", {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify(latest),
-                            });
-                          } catch (err) {
-                            console.error("Auto-save failed:", err);
-                          }
+                          const newImages = [...(card.images || []), url];
+                          const newData = JSON.parse(JSON.stringify(data));
+                          newData.cards[idx].images = newImages;
+                          setData(newData);
+                          dataRef.current = newData;
+                          await saveContent(newData);
                         }
                       }} />
                     </label>
