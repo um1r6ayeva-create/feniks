@@ -389,7 +389,7 @@ export default function AdminPage() {
                       className="flex-1 bg-zinc-900 text-zinc-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-1 text-sm" />
                     <label className="text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer underline underline-offset-4 decoration-zinc-600 self-center">
                       + Фото
-                      <input type="file" accept="image/*" capture="environment" className="hidden" onChange={async (e) => {
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                         const file = e.target.files?.[0]; if (!file) return;
                         const resized = await new Promise<string>((resolve) => {
                           const reader = new FileReader();
