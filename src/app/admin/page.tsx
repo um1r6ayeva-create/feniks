@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { SiteContent, Section, SocialLink } from "@/lib/data";
 
 type Tab = "profile" | "sections" | "social" | "cards" | "site" | "password";
@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [showLoginPwd, setShowLoginPwd] = useState(false);
   const [data, setData] = useState<SiteContent | null>(null);
+  const dataRef = useRef<SiteContent | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -44,6 +45,10 @@ export default function AdminPage() {
     }
   }
 
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setAuth(false);
@@ -51,14 +56,15 @@ export default function AdminPage() {
   }
 
   async function handleSave() {
-    if (!data) return;
+    const d = dataRef.current;
+    if (!d) return;
     setSaving(true);
     setSaveError(null);
     try {
       const res = await fetch("/api/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(d),
       });
       if (res.ok) {
         setSaved(true);
@@ -366,7 +372,7 @@ export default function AdminPage() {
                 <h2 className="text-lg font-medium text-white">Что нравится / не нравится</h2>
                 <button onClick={() => {
                   const id = "card-" + Date.now();
-                  updateData(["cards"], [...data.cards, { id, title: "", type: "like", category: "", image: "", reason: "" }]);
+                  updateData(["cards"], [...data.cards, { id, title: "", type: "like", category: "", images: [], reason: "" }]);
                 }}
                   className="px-4 py-2 rounded-lg text-sm bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
                   + Добавить
